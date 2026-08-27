@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>subnet-planner — kalkulator subnet & perencana VLSM</title>
+  <meta name="description" content="Kalkulator subnet, pemecah blok, dan perencana VLSM yang berjalan penuh di browser. Tanpa dependensi, tanpa server.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>🧮</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">/24</span>
+      <div>
+        <h1>subnet-planner</h1>
+        <p class="brand__tagline" data-i18n="tagline"></p>
+      </div>
+    </div>
+    <div class="topbar__actions">
+      <button type="button" id="lang-toggle" class="chip" aria-label="Language">ID</button>
+      <button type="button" id="theme-toggle" class="chip" aria-label="Theme">◐</button>
+      <button type="button" id="share" class="chip" data-i18n="share"></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="panel-calculator">
+      <h2 data-i18n="calculator"></h2>
+      <div class="field">
+        <label for="block" data-i18n="blockLabel"></label>
+        <input id="block" type="text" value="192.168.1.0/24" spellcheck="false"
+               autocomplete="off" inputmode="text">
+        <p class="hint" data-i18n="blockHint"></p>
+        <p class="error" id="block-error" role="alert" hidden></p>
+      </div>
+      <dl class="facts" id="facts"></dl>
+      <div class="ruler" id="ruler" aria-label="32-bit view"></div>
+    </section>
+
+    <section class="panel" id="panel-splitter">
+      <h2 data-i18n="splitter"></h2>
+      <div class="field field--inline">
+        <label for="split-prefix" data-i18n="splitTo"></label>
+        <input id="split-prefix" type="range" min="0" max="32" value="26">
+        <output id="split-prefix-out" class="mono">/26</output>
+        <span class="hint" id="split-count"></span>
+      </div>
+      <div class="table-scroll"><table id="split-table"></table></div>
+      <p class="error" id="split-error" role="alert" hidden></p>
+    </section>
+
+    <section class="panel" id="panel-vlsm">
+      <h2 data-i18n="vlsm"></h2>
+      <div class="table-scroll"><table id="request-table"></table></div>
+      <div class="row">
+        <button type="button" id="add-row" class="btn" data-i18n="addRow"></button>
+        <label class="check">
+          <input type="checkbox" id="allow-p2p" checked>
+          <span data-i18n="allowP2P"></span>
+        </label>
+        <button type="button" id="allocate" class="btn btn--primary" data-i18n="allocate"></button>
+      </div>
+      <p class="error" id="vlsm-error" role="alert" hidden></p>
+      <div id="plan-summary" class="summary"></div>
+      <div id="plan-map" class="map" aria-hidden="true"></div>
+      <div class="table-scroll"><table id="plan-table"></table></div>
+      <div class="row" id="export-row"></div>
+    </section>
+
+    <section class="panel" id="panel-lookup">
+      <h2 data-i18n="lookup"></h2>
+      <div class="field field--inline">
+        <input id="lookup-input" type="text" placeholder="192.168.1.77" spellcheck="false"
+               autocomplete="off">
+        <p class="hint" data-i18n="lookupHint"></p>
+      </div>
+      <p id="lookup-result" class="verdict"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      <a href="https://github.com/5amuel02/subnet-planner">source</a> · MIT ·
+      <button type="button" id="help-open" class="linklike" data-i18n="shortcuts"></button>
+    </p>
+  </footer>
+
+  <dialog id="help">
+    <h2 data-i18n="shortcuts"></h2>
+    <ul id="help-list"></ul>
+    <form method="dialog"><button class="btn">OK</button></form>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
