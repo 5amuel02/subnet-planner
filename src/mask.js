@@ -49,3 +49,35 @@ export function wildcardMask(mask) {
 export function prefixToMaskText(prefix) {
   return formatIPv4(prefixToMask(prefix));
 }
+
+/**
+ * Parse a block written any of the three ways people actually type them:
+ *
+ *   192.168.1.0/24
+ *   192.168.1.0/255.255.255.0
+ *   192.168.1.0 255.255.255.0
+ *
+ * A bare address with no mask is treated as a /32 host route.
+ */
+export function parseCIDR(text) {
+  if (typeof text !== 'string') {
+    throw new AddressError('block must be a string');
+  }
+  const input = text.trim();
+  if (!input) throw new AddressError('block is empty');
+
+  const [head, ...rest] = input.split(/[\s/]+/);
+  const address = parseIPv4(head);
+
+  if (rest.length === 0) return { address, prefix: 32 };
+  if (rest.length > 1) {
+    throw new AddressError(`"${text}" has more than one mask`);
+  }
+
+  const maskPart = rest[0];
+  const prefix = maskPart.includes('.')
+    ? maskToPrefix(parseIPv4(maskPart))
+    : parsePrefix(maskPart);
+
+  return { address, prefix };
+}
