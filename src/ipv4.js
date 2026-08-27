@@ -68,3 +68,20 @@ export function addOffset(value, offset) {
   }
   return next >>> 0;
 }
+
+/** Zero-padded binary for one address, grouped by octet: "11000000.10101000...". */
+export function toBinary(value, separator = '.') {
+  return toOctets(value)
+    .map((octet) => octet.toString(2).padStart(8, '0'))
+    .join(separator);
+}
+
+/** The flat 32-character bit string, handy for slicing at the prefix boundary. */
+export function toBitString(value) {
+  return (value >>> 0).toString(2).padStart(32, '0');
+}
+
+/** Hexadecimal form, as shown by some router CLIs: "0xC0A80101". */
+export function toHex(value) {
+  return '0x' + (value >>> 0).toString(16).toUpperCase().padStart(8, '0');
+}
