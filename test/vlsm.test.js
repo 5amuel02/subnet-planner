@@ -87,3 +87,13 @@ test('rejects unusable requirements', () => {
   assert.throws(() => normaliseRequests([{ name: 'x', hosts: 'many' }]), AddressError);
   assert.equal(normaliseRequests([{ hosts: 5 }])[0].name, 'subnet-1');
 });
+
+test('can hold WAN links at /30 for devices that predate RFC 3021', () => {
+  const plan = allocateVLSM(
+    '192.168.1.0/24',
+    [{ name: 'WAN link', hosts: 2 }],
+    { allowPointToPoint: false },
+  );
+  assert.equal(plan.allocations[0].cidr, '192.168.1.0/30');
+  assert.equal(plan.allocations[0].usableHosts, 2);
+});

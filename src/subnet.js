@@ -40,11 +40,12 @@ export function hostRange(address, prefix) {
 }
 
 /** The smallest prefix that still fits `hosts` usable addresses. */
-export function prefixForHosts(hosts) {
+export function prefixForHosts(hosts, { allowPointToPoint = true } = {}) {
   if (!Number.isInteger(hosts) || hosts < 1) {
     throw new AddressError('host count must be a positive whole number');
   }
-  for (let prefix = 32; prefix >= 0; prefix -= 1) {
+  const narrowest = allowPointToPoint ? 32 : 30;
+  for (let prefix = narrowest; prefix >= 0; prefix -= 1) {
     if (usableHosts(prefix) >= hosts) return prefix;
   }
   throw new AddressError(`${hosts} hosts do not fit in IPv4`);

@@ -15,7 +15,7 @@ import {
 import { rangeToCidrs } from './split.js';
 
 /** Normalise `{ name, hosts }` requests, rejecting anything unusable. */
-export function normaliseRequests(requests) {
+export function normaliseRequests(requests, options = {}) {
   if (!Array.isArray(requests) || requests.length === 0) {
     throw new AddressError('give at least one subnet requirement');
   }
@@ -27,7 +27,7 @@ export function normaliseRequests(requests) {
     return {
       name: String(request.name || `subnet-${index + 1}`).trim(),
       hosts,
-      prefix: prefixForHosts(hosts),
+      prefix: prefixForHosts(hosts, options),
       order: index,
     };
   });
@@ -39,13 +39,13 @@ export function normaliseRequests(requests) {
  * Returns the placed subnets in address order, whatever space is left over as
  * CIDR blocks, and the efficiency of the plan.
  */
-export function allocateVLSM(blockText, requests) {
+export function allocateVLSM(blockText, requests, options = {}) {
   const { address, prefix } = parseCIDR(blockText);
   const parentStart = networkAddress(address, prefix);
   const parentSize = totalAddresses(prefix);
   const parentEnd = parentStart + parentSize - 1;
 
-  const items = normaliseRequests(requests);
+  const items = normaliseRequests(requests, options);
   const ordered = [...items].sort((a, b) => a.prefix - b.prefix || a.order - b.order);
 
   const allocations = [];
