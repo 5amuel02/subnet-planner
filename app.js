@@ -8,6 +8,8 @@
 
 import { describe } from './src/subnet.js';
 import { toBitString } from './src/ipv4.js';
+import { splitEqual } from './src/split.js';
+import { splitEqual } from './src/split.js';
 import { t, LANGUAGES } from './src/i18n.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -119,11 +121,53 @@ panel(function renderRuler() {
   target.innerHTML = html;
 });
 
+/* --- equal splitter ------------------------------------------------------- */
+
+const SPLIT_COLUMNS = ['#', 'CIDR', 'network', 'firstHost', 'lastHost', 'broadcast', 'usableHosts'];
+
+panel(function renderSplitter() {
+  const slider = $('#split-prefix');
+  const table = $('#split-table');
+  $('#split-prefix-out').textContent = `/${state.splitPrefix}`;
+
+  if (!state.described) {
+    table.innerHTML = '';
+    $('#split-count').textContent = '';
+    return;
+  }
+  // Never offer a child prefix wider than the block being split.
+  slider.min = String(state.described.prefix);
+
+  let rows;
+  try {
+    rows = splitEqual(state.block, state.splitPrefix);
+  } catch (error) {
+    setError('#split-error', error.message);
+    table.innerHTML = '';
+    $('#split-count').textContent = '';
+    return;
+  }
+  setError('#split-error', '');
+  $('#split-count').textContent = t(state.lang, 'splitCount')(rows.length);
+
+  const head = SPLIT_COLUMNS
+    .map((key) => `<th>${key.length > 4 ? t(state.lang, key) : key}</th>`).join('');
+  const body = rows.map((row) => `<tr>
+    <td>${row.index}</td><td>${row.cidr}</td><td>${row.network}</td>
+    <td>${row.firstHost}</td><td>${row.lastHost}</td><td>${row.broadcast}</td>
+    <td>${row.usableHosts}</td></tr>`).join('');
+  table.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
+});
+
 /* --- boot ----------------------------------------------------------------- */
 
 function wireBase() {
   $('#block').addEventListener('input', (event) => {
     state.block = event.target.value;
+    renderAll();
+  });
+  $('#split-prefix').addEventListener('input', (event) => {
+    state.splitPrefix = Number(event.target.value);
     renderAll();
   });
   $('#lang-toggle').addEventListener('click', () => {
