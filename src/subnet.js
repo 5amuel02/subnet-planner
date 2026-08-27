@@ -83,3 +83,32 @@ export function addressScope(address) {
   }
   return 'public unicast';
 }
+
+/** Everything the calculator panel needs about one block, in one object. */
+export function describe(text) {
+  const { address, prefix } = parseCIDR(text);
+  const network = networkAddress(address, prefix);
+  const broadcast = broadcastAddress(address, prefix);
+  const { first, last } = hostRange(address, prefix);
+
+  return {
+    input: formatIPv4(address),
+    prefix,
+    cidr: `${formatIPv4(network)}/${prefix}`,
+    network: formatIPv4(network),
+    broadcast: formatIPv4(broadcast),
+    mask: prefixToMaskText(prefix),
+    wildcard: formatIPv4(wildcardMask(prefixToMask(prefix))),
+    firstHost: formatIPv4(first),
+    lastHost: formatIPv4(last),
+    totalAddresses: totalAddresses(prefix),
+    usableHosts: usableHosts(prefix),
+    addressClass: addressClass(network),
+    scope: addressScope(network),
+    binary: toBinary(network),
+    hex: toHex(network),
+    isPointToPoint: prefix === 31,
+    isHostRoute: prefix === 32,
+    raw: { address, network, broadcast, first, last },
+  };
+}
