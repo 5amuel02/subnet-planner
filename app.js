@@ -158,6 +158,57 @@ panel(function renderSplitter() {
   table.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
 });
 
+/* --- VLSM requirements form ----------------------------------------------- */
+
+function escapeAttribute(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+panel(function renderRequests() {
+  const table = $('#request-table');
+  const head = `<thead><tr>
+      <th>${t(state.lang, 'subnetName')}</th>
+      <th>${t(state.lang, 'hostsNeeded')}</th>
+      <th></th>
+    </tr></thead>`;
+  const body = state.requests.map((request, index) => `<tr>
+      <td><input type="text" data-field="name" data-index="${index}"
+                 value="${escapeAttribute(request.name)}"></td>
+      <td><input type="number" min="1" max="16777214" data-field="hosts" data-index="${index}"
+                 value="${escapeAttribute(request.hosts)}"></td>
+      <td><button type="button" class="linklike" data-remove="${index}"
+                  aria-label="remove">&times;</button></td>
+    </tr>`).join('');
+  table.innerHTML = `${head}<tbody>${body}</tbody>`;
+});
+
+function wireRequests() {
+  // The rows are rebuilt on every render, so listen on the table instead of
+  // on each input and read the row index back off the target.
+  $('#request-table').addEventListener('input', (event) => {
+    const { field, index } = event.target.dataset;
+    if (!field) return;
+    const row = state.requests[Number(index)];
+    row[field] = field === 'hosts' ? Number(event.target.value) : event.target.value;
+  });
+
+  $('#request-table').addEventListener('click', (event) => {
+    const target = event.target.dataset.remove;
+    if (target === undefined) return;
+    state.requests.splice(Number(target), 1);
+    renderAll();
+  });
+
+  $('#add-row').addEventListener('click', () => {
+    state.requests.push({ name: '', hosts: 10 });
+    renderAll();
+  });
+
+  $('#allow-p2p').addEventListener('change', (event) => {
+    state.allowP2P = event.target.checked;
+  });
+}
+
 /* --- boot ----------------------------------------------------------------- */
 
 function wireBase() {
@@ -186,6 +237,7 @@ export function boot() {
   applyLanguage();
   applyTheme();
   wireBase();
+  wireRequests();
   $('#block').value = state.block;
   renderAll();
 }
