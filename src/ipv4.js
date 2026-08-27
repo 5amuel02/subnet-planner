@@ -48,3 +48,23 @@ export function isValidIPv4(text) {
     return false;
   }
 }
+
+/** Split an unsigned 32-bit integer into its four octets, high byte first. */
+export function toOctets(value) {
+  const n = value >>> 0;
+  return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+}
+
+/** Render an unsigned 32-bit integer back to dotted-quad text. */
+export function formatIPv4(value) {
+  return toOctets(value).join('.');
+}
+
+/** Clamp-free addition used to walk address space; wraps are a bug, not a feature. */
+export function addOffset(value, offset) {
+  const next = (value >>> 0) + offset;
+  if (next < 0 || next > 0xffffffff) {
+    throw new AddressError('address arithmetic ran off the end of IPv4 space');
+  }
+  return next >>> 0;
+}
