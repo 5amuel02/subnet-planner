@@ -258,15 +258,17 @@ panel(function renderPlan() {
     .join('');
   const free = plan.free
     .map((block) => `<tr><td>${t(state.lang, 'free')}</td><td>${block.cidr}</td>`
-      + `<td colspan="7">${block.size}</td></tr>`).join('');
+      + `<td colspan="7">${block.size} ${t(state.lang, 'addresses')}</td></tr>`).join('');
   table.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}${free}</tbody>`;
 });
 
 /* --- address space map ---------------------------------------------------- */
 
-/* Evenly spaced hues so neighbouring blocks stay distinguishable. */
+/* Evenly spaced hues so neighbouring blocks stay distinguishable. Starting at
+   the accent blue keeps the first segment from looking like an error. */
+const HUE_START = 210;
 function segmentColour(index, total) {
-  const hue = Math.round((index / Math.max(total, 1)) * 320);
+  const hue = Math.round(HUE_START + (index / Math.max(total, 1)) * 320) % 360;
   return `hsl(${hue} 62% 52%)`;
 }
 
