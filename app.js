@@ -10,6 +10,7 @@ import { describe, contains } from './src/subnet.js';
 import { toBitString } from './src/ipv4.js';
 import { splitEqual } from './src/split.js';
 import { allocateVLSM } from './src/vlsm.js';
+import { toCSV, toMarkdown, toJSON, toCiscoConfig } from './src/export.js';
 import { t, LANGUAGES } from './src/i18n.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -322,6 +323,56 @@ panel(function renderLookup() {
   const verdict = t(state.lang, inside ? 'inside' : 'outside');
   result.textContent = `${query} ${verdict} ${state.described.cidr}`;
   result.className = `verdict ${inside ? 'verdict--in' : 'verdict--out'}`;
+});
+
+/* --- exporting ------------------------------------------------------------ */
+
+const FORMATS = [
+  ['CSV', 'text/csv', 'csv', (plan) => toCSV(plan.allocations)],
+  ['Markdown', 'text/markdown', 'md', (plan) => toMarkdown(plan.allocations)],
+  ['JSON', 'application/json', 'json', (plan) => toJSON(plan)],
+  ['Cisco', 'text/plain', 'txt', (plan) => toCiscoConfig(plan.allocations)],
+];
+
+function download(filename, mime, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: `${mime};charset=utf-8` }));
+  const link = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function copyText(button, text) {
+  await navigator.clipboard.writeText(text);
+  const original = button.textContent;
+  button.textContent = t(state.lang, 'copied');
+  setTimeout(() => { button.textContent = original; }, 1200);
+}
+
+panel(function renderExports() {
+  const row = $('#export-row');
+  row.innerHTML = '';
+  if (!state.plan) return;
+
+  for (const [label, mime, extension, render] of FORMATS) {
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'btn';
+    copy.textContent = `${t(state.lang, 'copy')} ${label}`;
+    copy.addEventListener('click', () => copyText(copy, render(state.plan)));
+
+    const save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'chip';
+    save.textContent = `↓ ${extension}`;
+    save.title = `${t(state.lang, 'download')} ${label}`;
+    save.addEventListener('click', () => download(
+      `subnet-plan.${extension}`, mime, render(state.plan),
+    ));
+
+    row.append(copy, save);
+  }
 });
 
 /* --- boot ----------------------------------------------------------------- */
