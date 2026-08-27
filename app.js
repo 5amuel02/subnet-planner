@@ -375,6 +375,54 @@ panel(function renderExports() {
   }
 });
 
+/* --- shareable URL -------------------------------------------------------- */
+
+/* Requirements ride in the hash as "name:hosts" pairs, names URI-encoded so a
+   comma or colon in a department name cannot break the split. */
+function encodeRequests(requests) {
+  return requests
+    .filter((request) => Number(request.hosts) > 0)
+    .map((request) => `${encodeURIComponent(request.name)}:${request.hosts}`)
+    .join(',');
+}
+
+function decodeRequests(text) {
+  return text.split(',').map((pair) => {
+    const separator = pair.lastIndexOf(':');
+    if (separator < 0) return null;
+    const hosts = Number(pair.slice(separator + 1));
+    if (!Number.isInteger(hosts) || hosts < 1) return null;
+    return { name: decodeURIComponent(pair.slice(0, separator)), hosts };
+  }).filter(Boolean);
+}
+
+export function restoreFromURL() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  if (params.has('block')) state.block = params.get('block');
+  if (params.has('split')) state.splitPrefix = Number(params.get('split'));
+  if (params.has('lang')) state.lang = params.get('lang');
+  if (params.has('theme')) state.theme = params.get('theme');
+  if (params.has('p2p')) state.allowP2P = params.get('p2p') === '1';
+  if (params.has('req')) {
+    const requests = decodeRequests(params.get('req'));
+    if (requests.length) state.requests = requests;
+  }
+}
+
+/* Registered last, so the URL always reflects what the panels just rendered.
+   replaceState keeps the back button usable instead of stacking every keystroke. */
+panel(function syncURL() {
+  const params = new URLSearchParams({
+    block: state.block,
+    split: String(state.splitPrefix),
+    lang: state.lang,
+    theme: state.theme,
+    p2p: state.allowP2P ? '1' : '0',
+    req: encodeRequests(state.requests),
+  });
+  window.history.replaceState(null, '', `#${params}`);
+});
+
 /* --- boot ----------------------------------------------------------------- */
 
 function wireBase() {
@@ -396,6 +444,9 @@ function wireBase() {
     applyLanguage();
     renderAll();
   });
+  $('#share').addEventListener('click', async (event) => {
+    await copyText(event.target, window.location.href);
+  });
   $('#theme-toggle').addEventListener('click', () => {
     const cycle = ['auto', 'light', 'dark'];
     state.theme = cycle[(cycle.indexOf(state.theme) + 1) % cycle.length];
@@ -404,11 +455,14 @@ function wireBase() {
 }
 
 export function boot() {
+  restoreFromURL();
   applyLanguage();
   applyTheme();
   wireBase();
   wireRequests();
   $('#block').value = state.block;
+  $('#split-prefix').value = String(state.splitPrefix);
+  $('#allow-p2p').checked = state.allowP2P;
   renderAll();
 }
 
