@@ -112,3 +112,27 @@ export function describe(text) {
     raw: { address, network, broadcast, first, last },
   };
 }
+
+/** Does `blockText` contain `addressText`? */
+export function contains(blockText, addressText) {
+  const { address: base, prefix } = parseCIDR(blockText);
+  const { address: candidate } = parseCIDR(addressText);
+  return networkAddress(candidate, prefix) === networkAddress(base, prefix);
+}
+
+/** Do two blocks share any address at all? */
+export function overlaps(aText, bText) {
+  const a = parseCIDR(aText);
+  const b = parseCIDR(bText);
+  const narrower = Math.max(a.prefix, b.prefix);
+  return networkAddress(a.address, narrower) === networkAddress(b.address, narrower);
+}
+
+/** Sort key so blocks can be listed in numeric address order. */
+export function compareBlocks(a, b) {
+  const left = parseCIDR(a);
+  const right = parseCIDR(b);
+  const byAddress = networkAddress(left.address, left.prefix)
+    - networkAddress(right.address, right.prefix);
+  return byAddress !== 0 ? byAddress : left.prefix - right.prefix;
+}
