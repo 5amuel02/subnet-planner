@@ -396,15 +396,27 @@ function decodeRequests(text) {
   }).filter(Boolean);
 }
 
+/* Read the hash without decoding it. URLSearchParams would percent-decode the
+   requirement list before it is split, and a department called "Guest, wifi"
+   would then split into two rows. Each field is decoded once, by hand. */
+function parseHash() {
+  const fields = {};
+  for (const pair of window.location.hash.replace(/^#/, '').split('&')) {
+    const separator = pair.indexOf('=');
+    if (separator > 0) fields[pair.slice(0, separator)] = pair.slice(separator + 1);
+  }
+  return fields;
+}
+
 export function restoreFromURL() {
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-  if (params.has('block')) state.block = params.get('block');
-  if (params.has('split')) state.splitPrefix = Number(params.get('split'));
-  if (params.has('lang')) state.lang = params.get('lang');
-  if (params.has('theme')) state.theme = params.get('theme');
-  if (params.has('p2p')) state.allowP2P = params.get('p2p') === '1';
-  if (params.has('req')) {
-    const requests = decodeRequests(params.get('req'));
+  const fields = parseHash();
+  if (fields.block) state.block = decodeURIComponent(fields.block);
+  if (fields.split) state.splitPrefix = Number(fields.split);
+  if (fields.lang) state.lang = fields.lang;
+  if (fields.theme) state.theme = fields.theme;
+  if (fields.p2p) state.allowP2P = fields.p2p === '1';
+  if (fields.req) {
+    const requests = decodeRequests(fields.req);
     if (requests.length) state.requests = requests;
   }
 }
@@ -412,15 +424,15 @@ export function restoreFromURL() {
 /* Registered last, so the URL always reflects what the panels just rendered.
    replaceState keeps the back button usable instead of stacking every keystroke. */
 panel(function syncURL() {
-  const params = new URLSearchParams({
-    block: state.block,
-    split: String(state.splitPrefix),
-    lang: state.lang,
-    theme: state.theme,
-    p2p: state.allowP2P ? '1' : '0',
-    req: encodeRequests(state.requests),
-  });
-  window.history.replaceState(null, '', `#${params}`);
+  const hash = [
+    `block=${encodeURIComponent(state.block)}`,
+    `split=${state.splitPrefix}`,
+    `lang=${state.lang}`,
+    `theme=${state.theme}`,
+    `p2p=${state.allowP2P ? '1' : '0'}`,
+    `req=${encodeRequests(state.requests)}`,
+  ].join('&');
+  window.history.replaceState(null, '', `#${hash}`);
 });
 
 /* --- keyboard shortcuts --------------------------------------------------- */
