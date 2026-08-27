@@ -1,0 +1,12 @@
+{
+  "name": "subnet-planner",
+  "version": "0.1.0",
+  "description": "Interactive browser subnet and VLSM planner. No dependencies.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/",
+    "serve": "python -m http.server 8080"
+  },
+  "license": "MIT"
+}
