@@ -26,3 +26,26 @@ export function prefixToMask(prefix) {
   if (prefix === 0) return 0;
   return (0xffffffff << (32 - prefix)) >>> 0;
 }
+
+/**
+ * Recover the prefix length from a mask, rejecting non-contiguous masks such
+ * as 255.0.255.0. A valid mask is a run of ones followed by a run of zeros.
+ */
+export function maskToPrefix(mask) {
+  const bits = toBitString(mask);
+  const match = /^(1*)(0*)$/.exec(bits);
+  if (!match) {
+    throw new AddressError(`${formatIPv4(mask)} is not a contiguous subnet mask`);
+  }
+  return match[1].length;
+}
+
+/** The wildcard (inverse) mask that access lists are written against. */
+export function wildcardMask(mask) {
+  return (~(mask >>> 0)) >>> 0;
+}
+
+/** Convenience: the mask that goes with a prefix, as dotted-quad text. */
+export function prefixToMaskText(prefix) {
+  return formatIPv4(prefixToMask(prefix));
+}
