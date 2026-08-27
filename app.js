@@ -9,6 +9,7 @@
 import { describe } from './src/subnet.js';
 import { toBitString } from './src/ipv4.js';
 import { splitEqual } from './src/split.js';
+import { allocateVLSM } from './src/vlsm.js';
 import { t, LANGUAGES } from './src/i18n.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -206,8 +207,59 @@ function wireRequests() {
 
   $('#allow-p2p').addEventListener('change', (event) => {
     state.allowP2P = event.target.checked;
+    if (state.plan) allocate();
   });
+
+  $('#allocate').addEventListener('click', allocate);
 }
+
+/* --- VLSM plan ------------------------------------------------------------ */
+
+const PLAN_COLUMNS = [
+  ['name', 'subnetName'], ['cidr', 'CIDR'], ['mask', 'mask'],
+  ['firstHost', 'firstHost'], ['lastHost', 'lastHost'], ['broadcast', 'broadcast'],
+  ['requested', 'hostsNeeded'], ['usableHosts', 'usableHosts'], ['wasted', 'wasted'],
+];
+
+function allocate() {
+  try {
+    state.plan = allocateVLSM(state.block, state.requests, {
+      allowPointToPoint: state.allowP2P,
+    });
+    setError('#vlsm-error', '');
+  } catch (error) {
+    state.plan = null;
+    setError('#vlsm-error', error.message);
+  }
+  renderAll();
+}
+
+panel(function renderPlan() {
+  const table = $('#plan-table');
+  const summary = $('#plan-summary');
+
+  if (!state.plan) {
+    table.innerHTML = '';
+    summary.textContent = t(state.lang, 'emptyPlan');
+    return;
+  }
+  const plan = state.plan;
+  const percent = (plan.efficiency * 100).toFixed(1);
+  summary.innerHTML = `
+    <span>${t(state.lang, 'used')} <b>${plan.usedAddresses}</b></span>
+    <span>${t(state.lang, 'free')} <b>${plan.freeAddresses}</b></span>
+    <span>${t(state.lang, 'efficiency')} <b>${percent}%</b></span>`;
+
+  const head = PLAN_COLUMNS
+    .map(([, label]) => `<th>${label === 'CIDR' ? label : t(state.lang, label)}</th>`).join('');
+  const body = plan.allocations
+    .map((row) => `<tr>${PLAN_COLUMNS.map(([key]) => `<td>${row[key]}</td>`).join('')}</tr>`)
+    .join('');
+  const free = plan.free
+    .map((block) => `<tr><td>${t(state.lang, 'free')}</td><td>${block.cidr}</td>`
+      + `<td colspan="7">${block.size}</td></tr>`).join('');
+  table.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}${free}</tbody>`;
+});
 
 /* --- boot ----------------------------------------------------------------- */
 
