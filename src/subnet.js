@@ -124,8 +124,10 @@ export function contains(blockText, addressText) {
 export function overlaps(aText, bText) {
   const a = parseCIDR(aText);
   const b = parseCIDR(bText);
-  const narrower = Math.max(a.prefix, b.prefix);
-  return networkAddress(a.address, narrower) === networkAddress(b.address, narrower);
+  // Two blocks overlap exactly when the wider one contains the narrower, so
+  // both are masked at the wider prefix — the smaller of the two numbers.
+  const wider = Math.min(a.prefix, b.prefix);
+  return networkAddress(a.address, wider) === networkAddress(b.address, wider);
 }
 
 /** Sort key so blocks can be listed in numeric address order. */
