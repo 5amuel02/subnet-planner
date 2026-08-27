@@ -32,3 +32,61 @@ export function normaliseRequests(requests) {
     };
   });
 }
+
+/**
+ * Allocate every request inside `blockText`.
+ *
+ * Returns the placed subnets in address order, whatever space is left over as
+ * CIDR blocks, and the efficiency of the plan.
+ */
+export function allocateVLSM(blockText, requests) {
+  const { address, prefix } = parseCIDR(blockText);
+  const parentStart = networkAddress(address, prefix);
+  const parentSize = totalAddresses(prefix);
+  const parentEnd = parentStart + parentSize - 1;
+
+  const items = normaliseRequests(requests);
+  const ordered = [...items].sort((a, b) => a.prefix - b.prefix || a.order - b.order);
+
+  const allocations = [];
+  let cursor = parentStart;
+
+  for (const item of ordered) {
+    const size = totalAddresses(item.prefix);
+    if (cursor + size - 1 > parentEnd) {
+      throw new AddressError(
+        `"${item.name}" needs a /${item.prefix} (${size} addresses) but only `
+        + `${parentEnd - cursor + 1} are left in ${blockText}`,
+      );
+    }
+    const { first, last } = hostRange(cursor, item.prefix);
+    allocations.push({
+      name: item.name,
+      requested: item.hosts,
+      prefix: item.prefix,
+      cidr: `${formatIPv4(cursor)}/${item.prefix}`,
+      network: formatIPv4(cursor),
+      firstHost: formatIPv4(first),
+      lastHost: formatIPv4(last),
+      broadcast: formatIPv4(addOffset(cursor, size - 1)),
+      mask: undefined,
+      size,
+      usableHosts: usableHosts(item.prefix),
+      wasted: usableHosts(item.prefix) - item.hosts,
+      offset: cursor - parentStart,
+    });
+    cursor += size;
+  }
+
+  const usedAddresses = cursor - parentStart;
+  return {
+    parent: `${formatIPv4(parentStart)}/${prefix}`,
+    parentSize,
+    allocations,
+    free: rangeToCidrs(cursor, parentEnd),
+    freeAddresses: parentSize - usedAddresses,
+    usedAddresses,
+    requestedHosts: items.reduce((sum, item) => sum + item.hosts, 0),
+    efficiency: items.reduce((sum, item) => sum + item.hosts, 0) / parentSize,
+  };
+}
