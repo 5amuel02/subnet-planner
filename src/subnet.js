@@ -49,3 +49,37 @@ export function prefixForHosts(hosts) {
   }
   throw new AddressError(`${hosts} hosts do not fit in IPv4`);
 }
+
+/** Legacy classful bucket. Informational only — nothing routes this way now. */
+export function addressClass(address) {
+  const firstOctet = (address >>> 24) & 255;
+  if (firstOctet < 128) return 'A';
+  if (firstOctet < 192) return 'B';
+  if (firstOctet < 224) return 'C';
+  if (firstOctet < 240) return 'D (multicast)';
+  return 'E (reserved)';
+}
+
+const SPECIAL_RANGES = [
+  ['10.0.0.0/8', 'private (RFC 1918)'],
+  ['172.16.0.0/12', 'private (RFC 1918)'],
+  ['192.168.0.0/16', 'private (RFC 1918)'],
+  ['127.0.0.0/8', 'loopback'],
+  ['169.254.0.0/16', 'link-local (APIPA)'],
+  ['100.64.0.0/10', 'carrier-grade NAT (RFC 6598)'],
+  ['192.0.2.0/24', 'documentation (TEST-NET-1)'],
+  ['198.51.100.0/24', 'documentation (TEST-NET-2)'],
+  ['203.0.113.0/24', 'documentation (TEST-NET-3)'],
+  ['224.0.0.0/4', 'multicast'],
+  ['240.0.0.0/4', 'reserved'],
+  ['0.0.0.0/8', 'this network'],
+];
+
+/** Human label for well-known space, or "public unicast" when it is ordinary. */
+export function addressScope(address) {
+  for (const [block, label] of SPECIAL_RANGES) {
+    const { address: base, prefix } = parseCIDR(block);
+    if (networkAddress(address, prefix) === base) return label;
+  }
+  return 'public unicast';
+}
