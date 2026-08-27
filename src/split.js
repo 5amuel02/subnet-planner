@@ -44,3 +44,39 @@ export function splitEqual(blockText, childPrefix, limit = MAX_ROWS) {
   }
   return rows;
 }
+
+/**
+ * Cover an arbitrary inclusive address range with the fewest aligned CIDR
+ * blocks. Used to describe the space a VLSM plan leaves unallocated.
+ *
+ * At each step it takes the largest block that both starts at `cursor` (that
+ * is, `cursor` is aligned to it) and still fits inside what remains.
+ */
+export function rangeToCidrs(start, end) {
+  if (end < start) return [];
+  const blocks = [];
+  let cursor = start >>> 0;
+
+  while (cursor <= end) {
+    let prefix = 32;
+    while (prefix > 0) {
+      const candidate = prefix - 1;
+      const size = totalAddresses(candidate);
+      const aligned = cursor % size === 0;
+      const fits = cursor + size - 1 <= end;
+      if (!aligned || !fits) break;
+      prefix = candidate;
+    }
+    const size = totalAddresses(prefix);
+    blocks.push({
+      cidr: `${formatIPv4(cursor)}/${prefix}`,
+      prefix,
+      size,
+      network: formatIPv4(cursor),
+      last: formatIPv4(cursor + size - 1),
+    });
+    if (cursor + size > 0xffffffff) break;
+    cursor += size;
+  }
+  return blocks;
+}
