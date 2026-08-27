@@ -261,6 +261,46 @@ panel(function renderPlan() {
   table.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}${free}</tbody>`;
 });
 
+/* --- address space map ---------------------------------------------------- */
+
+/* Evenly spaced hues so neighbouring blocks stay distinguishable. */
+function segmentColour(index, total) {
+  const hue = Math.round((index / Math.max(total, 1)) * 320);
+  return `hsl(${hue} 62% 52%)`;
+}
+
+panel(function renderMap() {
+  const map = $('#plan-map');
+  if (!state.plan) {
+    map.innerHTML = '';
+    map.hidden = true;
+    return;
+  }
+  map.hidden = false;
+
+  const { parentSize, allocations, free } = state.plan;
+  const segments = [
+    ...allocations.map((row, index) => ({
+      size: row.size,
+      colour: segmentColour(index, allocations.length),
+      label: `${row.name} — ${row.cidr}`,
+      free: false,
+    })),
+    ...free.map((block) => ({
+      size: block.size, colour: null, label: `${t(state.lang, 'free')} — ${block.cidr}`, free: true,
+    })),
+  ];
+
+  map.innerHTML = segments.map((segment) => {
+    const width = (segment.size / parentSize) * 100;
+    const style = segment.free
+      ? `width:${width}%`
+      : `width:${width}%;background:${segment.colour}`;
+    const classes = segment.free ? 'map__seg map__seg--free' : 'map__seg';
+    return `<span class="${classes}" style="${style}" title="${segment.label}"></span>`;
+  }).join('');
+});
+
 /* --- boot ----------------------------------------------------------------- */
 
 function wireBase() {
