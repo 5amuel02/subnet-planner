@@ -1,0 +1,56 @@
+/* Design tokens. Light is the base; the dark block below only swaps values. */
+:root {
+  color-scheme: light dark;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f5;
+  --ink: #16191f;
+  --ink-muted: #5b6472;
+  --line: #d9dee6;
+  --accent: #1f6feb;
+  --accent-ink: #ffffff;
+  --ok: #1a7f47;
+  --warn: #9a6700;
+  --danger: #c0392b;
+  --used: #1f6feb;
+  --free: #c8d1de;
+
+  --radius: 10px;
+  --gap: 1rem;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 0 4rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
+}
+
+h1 { font-size: 1.15rem; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 0.95rem; margin: 0 0 0.9rem; text-transform: uppercase;
+     letter-spacing: 0.08em; color: var(--ink-muted); }
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--gap);
+  display: grid;
+  gap: var(--gap);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.15rem;
+}
+
+.mono { font-family: var(--mono); }
+.hint { color: var(--ink-muted); font-size: 0.82rem; margin: 0.35rem 0 0; }
+.error { color: var(--danger); font-size: 0.85rem; margin: 0.5rem 0 0; }
