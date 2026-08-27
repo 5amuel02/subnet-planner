@@ -6,7 +6,7 @@
  * not blank out the VLSM plan below it.
  */
 
-import { describe } from './src/subnet.js';
+import { describe, contains } from './src/subnet.js';
 import { toBitString } from './src/ipv4.js';
 import { splitEqual } from './src/split.js';
 import { allocateVLSM } from './src/vlsm.js';
@@ -301,6 +301,29 @@ panel(function renderMap() {
   }).join('');
 });
 
+/* --- address lookup ------------------------------------------------------- */
+
+panel(function renderLookup() {
+  const result = $('#lookup-result');
+  const query = state.lookup.trim();
+  if (!query || !state.described) {
+    result.textContent = '';
+    result.className = 'verdict';
+    return;
+  }
+  let inside;
+  try {
+    inside = contains(state.block, query);
+  } catch (error) {
+    result.textContent = error.message;
+    result.className = 'verdict verdict--out';
+    return;
+  }
+  const verdict = t(state.lang, inside ? 'inside' : 'outside');
+  result.textContent = `${query} ${verdict} ${state.described.cidr}`;
+  result.className = `verdict ${inside ? 'verdict--in' : 'verdict--out'}`;
+});
+
 /* --- boot ----------------------------------------------------------------- */
 
 function wireBase() {
@@ -310,6 +333,10 @@ function wireBase() {
   });
   $('#split-prefix').addEventListener('input', (event) => {
     state.splitPrefix = Number(event.target.value);
+    renderAll();
+  });
+  $('#lookup-input').addEventListener('input', (event) => {
+    state.lookup = event.target.value;
     renderAll();
   });
   $('#lang-toggle').addEventListener('click', () => {
