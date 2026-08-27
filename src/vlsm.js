@@ -8,7 +8,7 @@
  */
 
 import { AddressError, formatIPv4, addOffset } from './ipv4.js';
-import { parseCIDR } from './mask.js';
+import { parseCIDR, prefixToMaskText } from './mask.js';
 import {
   networkAddress, totalAddresses, usableHosts, hostRange, prefixForHosts,
 } from './subnet.js';
@@ -69,7 +69,7 @@ export function allocateVLSM(blockText, requests) {
       firstHost: formatIPv4(first),
       lastHost: formatIPv4(last),
       broadcast: formatIPv4(addOffset(cursor, size - 1)),
-      mask: undefined,
+      mask: prefixToMaskText(item.prefix),
       size,
       usableHosts: usableHosts(item.prefix),
       wasted: usableHosts(item.prefix) - item.hosts,
