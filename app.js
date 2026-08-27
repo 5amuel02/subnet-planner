@@ -9,7 +9,6 @@
 import { describe } from './src/subnet.js';
 import { toBitString } from './src/ipv4.js';
 import { splitEqual } from './src/split.js';
-import { splitEqual } from './src/split.js';
 import { t, LANGUAGES } from './src/i18n.js';
 
 const $ = (selector) => document.querySelector(selector);
