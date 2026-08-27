@@ -423,6 +423,48 @@ panel(function syncURL() {
   window.history.replaceState(null, '', `#${params}`);
 });
 
+/* --- keyboard shortcuts --------------------------------------------------- */
+
+const SHORTCUTS = [
+  ['/', 'scFocus', () => { $('#block').focus(); $('#block').select(); }],
+  ['a', 'scAllocate', allocate],
+  ['n', 'scAddRow', () => $('#add-row').click()],
+  ['t', 'scTheme', () => $('#theme-toggle').click()],
+  ['l', 'scLang', () => $('#lang-toggle').click()],
+  ['?', 'scHelp', () => $('#help').showModal()],
+];
+
+/* Never steal a key from someone typing into a field. */
+function isTyping(target) {
+  return target instanceof HTMLElement
+    && (target.matches('input, textarea, select') || target.isContentEditable);
+}
+
+function renderHelp() {
+  $('#help-list').innerHTML = SHORTCUTS
+    .map(([key, label]) => `<li><kbd>${key}</kbd> — ${t(state.lang, label)}</li>`).join('');
+}
+
+function wireShortcuts() {
+  window.addEventListener('keydown', (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === 'Escape' && isTyping(event.target)) {
+      event.target.blur();
+      return;
+    }
+    if (isTyping(event.target)) return;
+
+    const match = SHORTCUTS.find(([key]) => key === event.key);
+    if (!match) return;
+    event.preventDefault();
+    match[2]();
+  });
+
+  $('#help-open').addEventListener('click', () => $('#help').showModal());
+}
+
+panel(renderHelp);
+
 /* --- boot ----------------------------------------------------------------- */
 
 function wireBase() {
@@ -460,6 +502,7 @@ export function boot() {
   applyTheme();
   wireBase();
   wireRequests();
+  wireShortcuts();
   $('#block').value = state.block;
   $('#split-prefix').value = String(state.splitPrefix);
   $('#allow-p2p').checked = state.allowP2P;
