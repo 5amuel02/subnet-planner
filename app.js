@@ -7,6 +7,7 @@
  */
 
 import { describe } from './src/subnet.js';
+import { toBitString } from './src/ipv4.js';
 import { t, LANGUAGES } from './src/i18n.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -89,6 +90,33 @@ panel(function renderCalculator() {
       <dt>${t(state.lang, key)}</dt>
       <dd>${String(result[key]).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</dd>
     </div>`).join('');
+});
+
+/* --- 32-bit ruler --------------------------------------------------------- */
+
+panel(function renderRuler() {
+  const target = $('#ruler');
+  if (!state.described) {
+    target.innerHTML = '';
+    return;
+  }
+  const { prefix, raw } = state.described;
+  const bits = toBitString(raw.network);
+
+  let html = '';
+  for (let octet = 0; octet < 4; octet += 1) {
+    if (octet > 0) html += '<span class="ruler__dot">.</span>';
+    html += '<span class="ruler__octet">';
+    for (let bit = 0; bit < 8; bit += 1) {
+      const index = octet * 8 + bit;
+      const role = index < prefix ? ' ruler__bit--network' : '';
+      html += `<span class="ruler__bit${role}">${bits[index]}</span>`;
+    }
+    html += '</span>';
+  }
+  html += `<span class="ruler__legend">${prefix} ${t(state.lang, 'networkBits')}`
+    + ` · ${32 - prefix} ${t(state.lang, 'hostBits')}</span>`;
+  target.innerHTML = html;
 });
 
 /* --- boot ----------------------------------------------------------------- */
